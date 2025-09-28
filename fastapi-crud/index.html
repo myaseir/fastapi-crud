@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>FastAPI CRUD Frontend</title>
+  <style>
+    body { font-family: Arial; padding: 20px; }
+    input, button { margin: 5px; padding: 5px; }
+  </style>
+</head>
+<body>
+
+  <h1>📝 FastAPI CRUD Demo</h1>
+
+  <h2>Create Item</h2>
+  <input type="text" id="create-name" placeholder="Name" />
+  <input type="text" id="create-desc" placeholder="Description" />
+  <button onclick="createItem()">Create</button>
+
+  <h2>Search Item by ID</h2>
+  <input type="number" id="search-id" placeholder="ID" />
+  <button onclick="getItem()">Search</button>
+  <p id="search-result"></p>
+
+  <h2>Update Item</h2>
+  <input type="number" id="update-id" placeholder="ID" />
+  <input type="text" id="update-name" placeholder="New Name" />
+  <input type="text" id="update-desc" placeholder="New Description" />
+  <button onclick="updateItem()">Update</button>
+
+  <h2>Delete Item</h2>
+  <input type="number" id="delete-id" placeholder="ID" />
+  <button onclick="deleteItem()">Delete</button>
+
+  <h2>All Items</h2>
+  <button onclick="loadItems()">🔄 Refresh</button>
+  <ul id="itemsList"></ul>
+
+  <script>
+    const apiURL = "http://127.0.0.1:8000/items/";
+
+    async function createItem() {
+      const name = document.getElementById("create-name").value;
+      const description = document.getElementById("create-desc").value;
+
+      const res = await fetch(apiURL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, description })
+      });
+
+      const data = await res.json();
+      alert("✅ Created: " + data.name);
+      loadItems();
+    }
+
+    async function getItem() {
+      const id = document.getElementById("search-id").value;
+      const res = await fetch(apiURL + id);
+
+      if (res.status === 404) {
+        document.getElementById("search-result").textContent = "❌ Item not found.";
+        return;
+      }
+
+      const item = await res.json();
+      document.getElementById("search-result").textContent = `✅ Found: ${item.name} - ${item.description}`;
+    }
+
+    async function updateItem() {
+      const id = document.getElementById("update-id").value;
+      const name = document.getElementById("update-name").value;
+      const description = document.getElementById("update-desc").value;
+
+      const res = await fetch(apiURL + id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, description })
+      });
+
+      if (res.status === 404) {
+        alert("❌ Item not found.");
+        return;
+      }
+
+      const item = await res.json();
+      alert("✅ Updated: " + item.name);
+      loadItems();
+    }
+
+    async function deleteItem() {
+      const id = document.getElementById("delete-id").value;
+
+      const res = await fetch(apiURL + id, {
+        method: "DELETE"
+      });
+
+      if (res.status === 404) {
+        alert("❌ Item not found.");
+        return;
+      }
+
+      alert("🗑️ Deleted item with ID " + id);
+      loadItems();
+    }
+
+    async function loadItems() {
+      const res = await fetch(apiURL);
+      const items = await res.json();
+      const list = document.getElementById("itemsList");
+      list.innerHTML = "";
+
+      items.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = `#${item.id}: ${item.name} - ${item.description}`;
+        list.appendChild(li);
+      });
+    }
+
+    window.onload = loadItems;
+  </script>
+
+</body>
+</html>
